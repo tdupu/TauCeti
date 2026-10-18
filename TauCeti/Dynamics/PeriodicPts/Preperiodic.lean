@@ -114,7 +114,7 @@ theorem IsPreperiodicPt.apply (hx : IsPreperiodicPt f x) : IsPreperiodicPt f (f 
 
 /-- A point is preperiodic iff any of its iterates is. -/
 @[simp]
-theorem isPreperiodicPt_iterate_apply_iff (m : ℕ) :
+theorem isPreperiodicPt_apply_iterate_iff (m : ℕ) :
     IsPreperiodicPt f (f^[m] x) ↔ IsPreperiodicPt f x := by
   refine ⟨fun ⟨r, s, hs, hrs⟩ ↦ ⟨r + m, s, hs, ?_⟩, fun hx ↦ hx.apply_iterate m⟩
   rwa [add_right_comm, iterate_add_apply, iterate_add_apply f r m]
@@ -122,7 +122,7 @@ theorem isPreperiodicPt_iterate_apply_iff (m : ℕ) :
 /-- A point is preperiodic iff its image is. -/
 @[simp]
 theorem isPreperiodicPt_apply_iff : IsPreperiodicPt f (f x) ↔ IsPreperiodicPt f x :=
-  isPreperiodicPt_iterate_apply_iff 1
+  isPreperiodicPt_apply_iterate_iff 1
 
 /-- **Preperiodic points have finite forward orbits**, and conversely. -/
 theorem isPreperiodicPt_iff_finite_range_iterate :
@@ -146,8 +146,27 @@ theorem isPreperiodicPt_iff_finite_range_iterate :
       hfin.exists_lt_map_eq_of_forall_mem (f := fun n : ℕ ↦ f^[n] x) (Set.mem_range_self ·)
     exact ⟨m, n - m, by omega, by rw [Nat.add_sub_cancel' hmn.le]; exact heq.symm⟩
 
+/-- A preperiodic point of `f` is preperiodic for every iterate of `f`. -/
+theorem IsPreperiodicPt.iterate (hx : IsPreperiodicPt f x) (m : ℕ) :
+    IsPreperiodicPt f^[m] x := by
+  rw [isPreperiodicPt_iff_finite_range_iterate] at hx ⊢
+  refine hx.subset ?_
+  rintro _ ⟨n, rfl⟩
+  exact ⟨m * n, by simp only [iterate_mul]⟩
+
+/-- For `m > 0`, a point is preperiodic for `f^[m]` iff it is preperiodic for `f`. -/
+theorem isPreperiodicPt_iterate_iff {m : ℕ} (hm : 0 < m) :
+    IsPreperiodicPt f^[m] x ↔ IsPreperiodicPt f x := by
+  refine ⟨fun hx ↦ ?_, fun hx ↦ hx.iterate m⟩
+  rw [isPreperiodicPt_iff_finite_range_iterate] at hx ⊢
+  refine ((Set.finite_lt_nat m).biUnion fun i _ ↦ hx.image f^[i]).subset ?_
+  rintro _ ⟨N, rfl⟩
+  refine Set.mem_biUnion (Nat.mod_lt N hm) ⟨_, ⟨N / m, rfl⟩, ?_⟩
+  dsimp only
+  rw [← iterate_mul, ← iterate_add_apply, Nat.mod_add_div N m]
+
 /-- A semiconjugacy carries preperiodic points to preperiodic points. -/
-theorem IsPreperiodicPt.map {g : β → β} {π : β → α} (h : Semiconj π g f) {y : β}
+protected theorem IsPreperiodicPt.map {g : β → β} {π : β → α} (h : Semiconj π g f) {y : β}
     (hy : IsPreperiodicPt g y) : IsPreperiodicPt f (π y) := by
   obtain ⟨r, s, hs, hrs⟩ := hy
   refine ⟨r, s, hs, ?_⟩
@@ -189,6 +208,19 @@ theorem forwardOrbit_subset_of_mapsTo (hst : s ⊆ t) (ht : MapsTo f t t) :
   obtain ⟨n, x, hx, rfl⟩ := mem_forwardOrbit.mp hy
   exact ht.iterate n (hst hx)
 
+/-- A forward-invariant set contains the forward orbit of `s` iff it contains `s`. -/
+theorem forwardOrbit_subset_iff (ht : MapsTo f t t) : forwardOrbit f s ⊆ t ↔ s ⊆ t :=
+  ⟨subset_forwardOrbit.trans, fun hst ↦ forwardOrbit_subset_of_mapsTo hst ht⟩
+
+/-- A set is its own forward orbit iff it is forward invariant. -/
+theorem forwardOrbit_eq_self_iff : forwardOrbit f s = s ↔ MapsTo f s s :=
+  ⟨fun h ↦ h ▸ mapsTo_forwardOrbit, fun h ↦
+    (forwardOrbit_subset_of_mapsTo subset_rfl h).antisymm subset_forwardOrbit⟩
+
+@[simp]
+theorem forwardOrbit_forwardOrbit : forwardOrbit f (forwardOrbit f s) = forwardOrbit f s :=
+  forwardOrbit_eq_self_iff.mpr mapsTo_forwardOrbit
+
 @[gcongr]
 theorem forwardOrbit_mono (hst : s ⊆ t) : forwardOrbit f s ⊆ forwardOrbit f t :=
   forwardOrbit_subset_of_mapsTo (hst.trans subset_forwardOrbit) mapsTo_forwardOrbit
@@ -217,16 +249,18 @@ theorem forwardOrbit_eq_biUnion_range_iterate :
 theorem forwardOrbit_singleton : forwardOrbit f {x} = Set.range fun n : ℕ ↦ f^[n] x := by
   simp [forwardOrbit_eq_biUnion_range_iterate]
 
+/-- Every point of a set with finite forward orbit is preperiodic. -/
+theorem IsPreperiodicPt.of_finite_forwardOrbit (h : (forwardOrbit f s).Finite) (hx : x ∈ s) :
+    IsPreperiodicPt f x :=
+  isPreperiodicPt_iff_finite_range_iterate.mpr
+    (h.subset (by rw [← forwardOrbit_singleton]; exact forwardOrbit_mono (by simpa)))
+
 /-- **The forward orbit of a finite set is finite iff each of its points is preperiodic.** -/
 theorem finite_forwardOrbit_iff (hs : s.Finite) :
     (forwardOrbit f s).Finite ↔ ∀ x ∈ s, IsPreperiodicPt f x := by
-  simp_rw [isPreperiodicPt_iff_finite_range_iterate]
-  constructor
-  · intro h x hx
-    exact h.subset (by rw [← forwardOrbit_singleton]; exact forwardOrbit_mono (by simpa))
-  · intro h
-    rw [forwardOrbit_eq_biUnion_range_iterate]
-    exact hs.biUnion h
+  refine ⟨fun h _ hx ↦ .of_finite_forwardOrbit h hx, fun h ↦ ?_⟩
+  rw [forwardOrbit_eq_biUnion_range_iterate]
+  exact hs.biUnion fun x hx ↦ isPreperiodicPt_iff_finite_range_iterate.mp (h x hx)
 
 /-- For `m > 0`, the forward orbit of `⋃ i < m, f^[i] '' s` under `f^[m]` is the forward orbit of
 `s` under `f`. -/
