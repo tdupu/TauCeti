@@ -5,7 +5,6 @@ Authors: Taylor Dupuy, Thomas Tucker, Zhuoran Wang
 -/
 module
 
-public import Mathlib.Algebra.Algebra.Pi
 public import Mathlib.RingTheory.Localization.Away.Basic
 public import TauCeti.RingTheory.Etale.AdjoinRoot
 
@@ -16,8 +15,8 @@ For a commutative ring `A`, an element `f` and an exponent `e`, the *standard ta
 cover* of `Spec A` along `f` is `Spec A[x]/(x^e − f)` (Stacks, Example 58.31.4 (0EYF)). Stacks
 assumes `A` Noetherian, `f` a nonzerodivisor with `A/fA` reduced and `e ≥ 1` invertible in `A`;
 the algebra itself is defined without these hypotheses, and each statement carries the ones it
-uses. This file proves that the cover is free of rank `e`, and that when `e` is invertible the
-cover `A_f[x]/(x^e − f)` of `Spec A_f` is étale; the comparison of the latter with the
+uses. This file proves that the cover is free of rank `e`, and that when `e` is nonzero and
+invertible the cover `A_f[x]/(x^e − f)` of `Spec A_f` is étale; the comparison with the
 localization at `f` of the cover over `A` is not proved here.
 
 ## Main definitions
@@ -30,9 +29,10 @@ localization at `f` of the cover over `A` is not proved here.
 ## Main results
 
 * `TauCeti.standardTameCover_free`: the cover is free of rank `e`.
-* `TauCeti.standardTameCover_etale_of_isUnit`: if `f` and `e` are units, the cover is étale.
-* `TauCeti.standardTameCover_etale_away`: if `e` is a unit, `B[x]/(x^e − f)` is étale over
-  any localization `B` of `A` away from `f`.
+* `TauCeti.standardTameCover_etale_of_isUnit`: if `e ≠ 0` and `f` and `e` are units, the cover is
+  étale.
+* `TauCeti.standardTameCover_etale_away`: if `e ≠ 0` and `e` is a unit, `B[x]/(x^e − f)` is
+  étale over any localization `B` of `A` away from `f`.
 * `TauCeti.isFiniteProductOfStandardTameCovers_standardTameCover`: a single standard cover is a
   finite product of standard covers.
 * `TauCeti.IsFiniteProductOfStandardTameCovers.of_algEquiv`: transport along `A`-algebra
@@ -80,7 +80,8 @@ theorem standardTameCover_free [Nontrivial A] (f : A) (e : ℕ) (he : 1 ≤ e) :
 
 variable {A}
 
-/-- If `f` and `e` are units of `A`, the standard cover `A[x]/(x^e − f)` is étale over `A`. -/
+/-- If `e ≠ 0` and `f` and `e` are units of `A`, the standard cover `A[x]/(x^e − f)` is
+étale over `A`. -/
 theorem standardTameCover_etale_of_isUnit {f : A} {e : ℕ} (he : e ≠ 0) (hf : IsUnit f)
     (heu : IsUnit (e : A)) : Algebra.Etale A (standardTameCover A f e) := by
   -- `x^e − u` is monic and separable for units `u` and `e`, so the cover is standard étale.
@@ -89,7 +90,7 @@ theorem standardTameCover_etale_of_isUnit {f : A} {e : ℕ} (he : e ≠ 0) (hf :
     (separable_X_pow_sub_C_unit u heu)
   infer_instance
 
-/-- If `e` is invertible in `A` and `B` is a localization of `A` away from `f`, then
+/-- If `e ≠ 0`, `e` is invertible in `A`, and `B` is a localization of `A` away from `f`, then
 `B[x]/(x^e − f)` is étale over `B`. This is the "étale over `D(f)`" assertion of Stacks, Example
 58.31.4 (0EYF), for the cover built over `A_f`; its comparison with the localization at `f` of the
 cover over `A` is not proved here. -/
@@ -109,19 +110,28 @@ def IsFiniteProductOfStandardTameCovers (C : Type u) [CommRing C] [Algebra A C] 
   ∃ (ι : Type) (_ : Fintype ι) (e : ι → ℕ), (∀ i, 1 ≤ e i) ∧ (∀ i, IsUnit (e i : A)) ∧
     Nonempty (C ≃ₐ[A] ∀ i, standardTameCover A f (e i))
 
+/-- Characterization of finite products of standard tame covers by their indexed family. -/
+theorem isFiniteProductOfStandardTameCovers_iff {C : Type u} [CommRing C] [Algebra A C] (f : A) :
+    IsFiniteProductOfStandardTameCovers A C f ↔
+      ∃ (ι : Type) (_ : Fintype ι) (e : ι → ℕ), (∀ i, 1 ≤ e i) ∧
+        (∀ i, IsUnit (e i : A)) ∧ Nonempty (C ≃ₐ[A] ∀ i, standardTameCover A f (e i)) :=
+  Iff.rfl
+
 /-- Being a finite product of standard covers is invariant under `A`-algebra isomorphisms. -/
 theorem IsFiniteProductOfStandardTameCovers.of_algEquiv {C C' : Type u} [CommRing C]
     [Algebra A C] [CommRing C'] [Algebra A C'] {f : A}
     (h : IsFiniteProductOfStandardTameCovers A C f) (φ : C ≃ₐ[A] C') :
     IsFiniteProductOfStandardTameCovers A C' f := by
-  obtain ⟨ι, _, e, he, heu, ⟨ψ⟩⟩ := h
-  exact ⟨ι, inferInstance, e, he, heu, ⟨φ.symm.trans ψ⟩⟩
+  obtain ⟨ι, _, e, he, heu, ⟨ψ⟩⟩ := (isFiniteProductOfStandardTameCovers_iff f).mp h
+  exact (isFiniteProductOfStandardTameCovers_iff f).mpr
+    ⟨ι, inferInstance, e, he, heu, ⟨φ.symm.trans ψ⟩⟩
 
 /-- A single standard cover is a finite product of standard covers, indexed by a point. -/
 theorem isFiniteProductOfStandardTameCovers_standardTameCover (f : A) {e : ℕ} (he : 1 ≤ e)
     (heu : IsUnit (e : A)) :
     IsFiniteProductOfStandardTameCovers A (standardTameCover A f e) f :=
-  ⟨Unit, inferInstance, fun _ ↦ e, fun _ ↦ he, fun _ ↦ heu,
-    ⟨(AlgEquiv.funUnique A Unit (standardTameCover A f e)).symm⟩⟩
+  (isFiniteProductOfStandardTameCovers_iff f).mpr
+    ⟨Unit, inferInstance, fun _ ↦ e, fun _ ↦ he, fun _ ↦ heu,
+      ⟨(AlgEquiv.funUnique A Unit (standardTameCover A f e)).symm⟩⟩
 
 end TauCeti
