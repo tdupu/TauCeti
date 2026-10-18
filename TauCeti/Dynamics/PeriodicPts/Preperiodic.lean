@@ -39,7 +39,7 @@ a map is postcritically finite when the forward orbit of its branch locus is fin
 * `Function.exists_isPeriodicPt_of_mapsTo`: a self-map of a finite nonempty invariant set has a
   periodic point in it.
 * `Function.Semiconj.image_forwardOrbit` and
-  `Function.Semiconj.finite_forwardOrbit_iff_of_finite_fibres`: a semiconjugacy carries forward
+  `Function.Semiconj.finite_forwardOrbit_iff_of_finite_fibers`: a semiconjugacy carries forward
   orbits to forward orbits, and with finite fibres it preserves their finiteness.
 
 ## References
@@ -52,7 +52,7 @@ a map is postcritically finite when the forward orbit of its branch locus is fin
   `Pcf.DivisorDynamics.postcriticalSet_eq_biUnion_orbit`, `finite_forwardOrbit_iff` its
   `Pcf.DivisorDynamics.isPCF_iff_forall_orbit_finite`,
   `forwardOrbit_iterate` its `Pcf.DivisorDynamics.postcriticalSet_iterate`, and the finite-fibre
-  direction of `Semiconj.finite_forwardOrbit_iff_of_finite_fibres` its
+  direction of `Semiconj.finite_forwardOrbit_iff_of_finite_fibers` its
   `Pcf.DivisorDynamics.isPCF_of_finite_cover`. The notion of a preperiodic point is new here.
 -/
 
@@ -70,56 +70,55 @@ variable {α β : Type*} {f : α → α} {x : α}
 def IsPreperiodicPt (f : α → α) (x : α) : Prop :=
   ∃ r s : ℕ, 0 < s ∧ f^[r + s] x = f^[r] x
 
-/-- A point is preperiodic iff some iterate of it is a periodic point. -/
-theorem isPreperiodicPt_iff_exists_mem_periodicPts :
-    IsPreperiodicPt f x ↔ ∃ r, f^[r] x ∈ periodicPts f := by
-  have hiter (r s : ℕ) : f^[r + s] x = f^[s] (f^[r] x) := by
-    rw [add_comm, iterate_add_apply]
-  constructor
-  · rintro ⟨r, s, hs, hrs⟩
-    exact ⟨r, mk_mem_periodicPts hs ((hiter r s).symm.trans hrs)⟩
-  · rintro ⟨r, hr⟩
-    obtain ⟨s, hs, hper⟩ := mem_periodicPts.mp hr
-    exact ⟨r, s, hs, (hiter r s).trans hper⟩
+/-- The defining property of a preperiodic point. -/
+theorem isPreperiodicPt_iff : IsPreperiodicPt f x ↔ ∃ r s : ℕ, 0 < s ∧ f^[r + s] x = f^[r] x :=
+  Iff.rfl
+
+/-- The equation `f^[r + s] x = f^[r] x` says that `f^[r] x` is periodic of period `s`. -/
+theorem iterate_add_eq_iterate_iff_isPeriodicPt {r s : ℕ} :
+    f^[r + s] x = f^[r] x ↔ IsPeriodicPt f s (f^[r] x) := by
+  rw [add_comm, iterate_add_apply]
+  rfl
+
+/-- A point some iterate of which is periodic of positive period is preperiodic. -/
+theorem IsPreperiodicPt.of_isPeriodicPt_iterate {r n : ℕ} (hn : 0 < n)
+    (h : IsPeriodicPt f n (f^[r] x)) : IsPreperiodicPt f x :=
+  ⟨r, n, hn, iterate_add_eq_iterate_iff_isPeriodicPt.mpr h⟩
 
 /-- Some iterate of a preperiodic point is periodic. -/
 theorem IsPreperiodicPt.exists_isPeriodicPt_iterate (hx : IsPreperiodicPt f x) :
     ∃ r n, 0 < n ∧ IsPeriodicPt f n (f^[r] x) := by
-  obtain ⟨r, hr⟩ := isPreperiodicPt_iff_exists_mem_periodicPts.mp hx
-  obtain ⟨n, hn, hper⟩ := mem_periodicPts.mp hr
-  exact ⟨r, n, hn, hper⟩
+  obtain ⟨r, s, hs, hrs⟩ := hx
+  exact ⟨r, s, hs, iterate_add_eq_iterate_iff_isPeriodicPt.mp hrs⟩
 
 /-- A periodic point of positive period is preperiodic. -/
 theorem IsPeriodicPt.isPreperiodicPt {n : ℕ} (hn : 0 < n) (hx : IsPeriodicPt f n x) :
     IsPreperiodicPt f x :=
-  isPreperiodicPt_iff_exists_mem_periodicPts.mpr ⟨0, mk_mem_periodicPts hn hx⟩
+  IsPreperiodicPt.of_isPeriodicPt_iterate (r := 0) hn hx
 
 /-- Every point of `periodicPts f` is preperiodic. -/
 theorem isPreperiodicPt_of_mem_periodicPts (hx : x ∈ periodicPts f) : IsPreperiodicPt f x :=
-  isPreperiodicPt_iff_exists_mem_periodicPts.mpr ⟨0, hx⟩
+  let ⟨_, hn, hper⟩ := mem_periodicPts.mp hx
+  hper.isPreperiodicPt hn
 
 /-- Iterates of a preperiodic point are preperiodic. -/
-theorem IsPreperiodicPt.iterate (hx : IsPreperiodicPt f x) (m : ℕ) :
+theorem IsPreperiodicPt.apply_iterate (hx : IsPreperiodicPt f x) (m : ℕ) :
     IsPreperiodicPt f (f^[m] x) := by
   obtain ⟨r, n, hn, hper⟩ := hx.exists_isPeriodicPt_iterate
-  have hcomm : f^[r] (f^[m] x) = f^[m] (f^[r] x) := by
-    rw [← iterate_add_apply, add_comm, iterate_add_apply]
-  refine isPreperiodicPt_iff_exists_mem_periodicPts.mpr ⟨r, ?_⟩
-  rw [hcomm]
-  exact mk_mem_periodicPts hn (hper.apply_iterate m)
+  refine IsPreperiodicPt.of_isPeriodicPt_iterate (r := r) hn ?_
+  rw [(Commute.iterate_iterate_self f r m).eq x]
+  exact hper.apply_iterate m
 
 /-- The image of a preperiodic point is preperiodic. -/
 theorem IsPreperiodicPt.apply (hx : IsPreperiodicPt f x) : IsPreperiodicPt f (f x) :=
-  hx.iterate 1
+  hx.apply_iterate 1
 
 /-- **Preperiodic points have finite forward orbits**, and conversely. -/
 theorem isPreperiodicPt_iff_finite_range_iterate :
     IsPreperiodicPt f x ↔ (Set.range fun n : ℕ ↦ f^[n] x).Finite := by
   constructor
-  · rintro ⟨r, s, hs, hrs⟩
-    have hper : IsPeriodicPt f s (f^[r] x) := by
-      rw [IsPeriodicPt, IsFixedPt, ← iterate_add_apply, add_comm]
-      exact hrs
+  · intro hx
+    obtain ⟨r, s, hs, hper⟩ := hx.exists_isPeriodicPt_iterate
     refine ((Set.finite_Iio (r + s)).image fun n ↦ f^[n] x).subset ?_
     rintro _ ⟨n, rfl⟩
     rcases lt_or_ge n r with hn | hn
@@ -132,13 +131,9 @@ theorem isPreperiodicPt_iff_finite_range_iterate :
         dsimp only
         rw [iterate_add_apply, hper.iterate_mod_apply, ← iterate_add_apply, ← hnr]
   · intro hfin
-    have : Finite (Set.range fun n : ℕ ↦ f^[n] x) := hfin.to_subtype
-    obtain ⟨m, n, hmn, heq⟩ := Finite.exists_ne_map_eq_of_infinite
-      (Set.rangeFactorization fun n : ℕ ↦ f^[n] x)
-    have heq' : f^[m] x = f^[n] x := congrArg Subtype.val heq
-    rcases lt_or_gt_of_ne hmn with h | h
-    · exact ⟨m, n - m, by omega, by rw [Nat.add_sub_cancel' h.le]; exact heq'.symm⟩
-    · exact ⟨n, m - n, by omega, by rw [Nat.add_sub_cancel' h.le]; exact heq'⟩
+    obtain ⟨m, n, hmn, heq⟩ :=
+      hfin.exists_lt_map_eq_of_forall_mem (f := fun n : ℕ ↦ f^[n] x) (Set.mem_range_self ·)
+    exact ⟨m, n - m, by omega, by rw [Nat.add_sub_cancel' hmn.le]; exact heq.symm⟩
 
 /-- A semiconjugacy carries preperiodic points to preperiodic points. -/
 theorem IsPreperiodicPt.map {g : β → β} {π : β → α} (h : Semiconj π g f) {y : β}
@@ -155,6 +150,11 @@ def forwardOrbit (f : α → α) (s : Set α) : Set α :=
 
 variable {s t : Set α}
 
+/-- The defining formula of the forward orbit. -/
+theorem forwardOrbit_def : forwardOrbit f s = ⋃ n : ℕ, f^[n] '' s := by
+  rw [forwardOrbit]
+
+@[simp]
 theorem mem_forwardOrbit {y : α} : y ∈ forwardOrbit f s ↔ ∃ n, ∃ x ∈ s, f^[n] x = y := by
   simp [forwardOrbit]
 
@@ -181,6 +181,11 @@ theorem forwardOrbit_subset_of_mapsTo (hst : s ⊆ t) (ht : MapsTo f t t) :
 theorem forwardOrbit_mono (hst : s ⊆ t) : forwardOrbit f s ⊆ forwardOrbit f t :=
   forwardOrbit_subset_of_mapsTo (hst.trans subset_forwardOrbit) mapsTo_forwardOrbit
 
+@[simp]
+theorem forwardOrbit_empty : forwardOrbit f ∅ = ∅ := by
+  simp [forwardOrbit]
+
+@[simp]
 theorem forwardOrbit_union : forwardOrbit f (s ∪ t) = forwardOrbit f s ∪ forwardOrbit f t := by
   simp only [forwardOrbit, image_union, iUnion_union_distrib]
 
@@ -244,7 +249,7 @@ theorem Semiconj.image_forwardOrbit {g : β → β} {π : β → α} (h : Semico
 
 /-- Along a semiconjugacy with finite fibres, the forward orbit of `t` is finite iff the forward
 orbit of its image is. -/
-theorem Semiconj.finite_forwardOrbit_iff_of_finite_fibres {g : β → β} {π : β → α}
+theorem Semiconj.finite_forwardOrbit_iff_of_finite_fibers {g : β → β} {π : β → α}
     (h : Semiconj π g f) (hfib : ∀ a, (π ⁻¹' {a}).Finite) (t : Set β) :
     (forwardOrbit g t).Finite ↔ (forwardOrbit f (π '' t)).Finite := by
   rw [← h.image_forwardOrbit]
