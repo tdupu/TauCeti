@@ -54,8 +54,10 @@ theorem IsUnramifiedAt.baseChange (q : Ideal S) [q.IsPrime] (Q : Ideal (R' ⊗[R
       have hrs : (r ⊗ₜ[R] s : T) = (r ⊗ₜ[R] 1) * (1 ⊗ₜ[R] s) := by simp
       rw [Algebra.TensorProduct.map_tmul, Algebra.TensorProduct.lift_tmul]
       rw [AlgHom.id_apply, IsScalarTower.coe_toAlgHom', Localization.localAlgHom_apply]
+      -- `erw`: the ring hom underlying `includeRight` is `includeRight.toRingHom` only up to defeq
       erw [Localization.localRingHom_to_map]
       rw [hrs, map_mul]
+      -- `algebraMap R' TQ r` and `algebraMap T TQ (r ⊗ₜ 1)` agree by definition of the tower
       rfl
   algebraize [f.toRingHom, g.toRingHom]
   have : IsScalarTower T (R' ⊗[R] Sq) TQ := .of_algebraMap_eq fun x ↦ (hfg x).symm

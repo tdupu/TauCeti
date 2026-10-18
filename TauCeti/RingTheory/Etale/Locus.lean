@@ -26,7 +26,7 @@ closed fibre. With `𝔭 = 𝔮 ∩ R`, this applies to `R_𝔭 → S_𝔮`, and
 
 ## Main results
 
-* `Algebra.FormallyEtale.of_flat_of_formallyUnramified_of_isLocalization`: a flat, formally
+* `Algebra.FormallyEtale.of_formallyUnramified_of_flat_of_isLocalization`: a flat, formally
   unramified local homomorphism that is a localization of a finitely presented algebra is formally
   étale.
 * `Algebra.IsEtaleAt.of_isUnramifiedAt_of_flatAt`: a finitely presented algebra that is flat and
@@ -38,7 +38,7 @@ closed fibre. With `𝔭 = 𝔮 ∩ R`, this applies to `R_𝔭 → S_𝔮`, and
 * Ported from T. Dupuy, T. Tucker and Z. Wang,
   [pcfawd-formalization](https://github.com/tdupu/pcfawd-formalization) at commit
   `9a20b3f351446d64e6015d704198bc71c7002008` (Apache-2.0):
-  `Algebra.FormallyEtale.of_flat_of_formallyUnramified_of_isLocalization` is
+  `Algebra.FormallyEtale.of_formallyUnramified_of_flat_of_isLocalization` is
   `Pcf.Stacks.formallyEtale_of_flat_of_formallyUnramified_of_isLocalization` in
   `lean/Pcf/Stacks/Purity/LocalEtale.lean`, and `Algebra.IsEtaleAt.of_isUnramifiedAt_of_flatAt` is
   `Pcf.Stacks.isEtaleAt_of_flat_of_formallyUnramified` in
@@ -56,11 +56,11 @@ open IsLocalRing
 /-- A flat, formally unramified local homomorphism `R → S`, where `S` is a localization of a
 finitely presented `R`-algebra `P`, is formally étale. This is a local form of
 `Algebra.Etale.of_formallyUnramified_of_flat`. -/
-theorem FormallyEtale.of_flat_of_formallyUnramified_of_isLocalization
+theorem FormallyEtale.of_formallyUnramified_of_flat_of_isLocalization
     {R S P : Type*} [CommRing R] [CommRing S] [CommRing P]
     [Algebra R S] [Algebra R P] [Algebra P S] [IsScalarTower R P S]
     [IsLocalRing R] [IsLocalRing S] [IsLocalHom (algebraMap R S)]
-    [Module.Flat R S] [FormallyUnramified R S]
+    [FormallyUnramified R S] [Module.Flat R S]
     (M : Submonoid P) [IsLocalization M S] [FinitePresentation R P] :
     FormallyEtale R S := by
   have : EssFiniteType P S := .of_isLocalization S M
@@ -99,10 +99,9 @@ theorem IsEtaleAt.of_isUnramifiedAt_of_flatAt {R S : Type*} [CommRing R] [CommRi
   have : FinitePresentation Rp Sp := by
     have : IsPushout R Rp S Sp := .symm <| isPushout_of_isLocalization p.primeCompl _ _ _
     exact .equiv (IsPushout.equiv R Rp S Sp)
-  have : FormallyUnramified Rp Sq := .localization_base p.primeCompl
   have : Module.Flat Rp Sq := (Module.flat_iff_of_isLocalization Rp p.primeCompl Sq).mpr ‹_›
   have : FormallyEtale Rp Sq :=
-    .of_flat_of_formallyUnramified_of_isLocalization (algebraMapSubmonoid Sp q.primeCompl)
+    .of_formallyUnramified_of_flat_of_isLocalization (algebraMapSubmonoid Sp q.primeCompl)
   exact FormallyEtale.comp R Rp Sq
 
 end Algebra
