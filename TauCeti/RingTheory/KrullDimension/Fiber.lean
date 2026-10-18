@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: The Tau Ceti contributors
+Authors: The Tau Ceti contributors, Taylor Dupuy, Thomas Tucker, Zhuoran Wang
 -/
 module
 
@@ -36,6 +36,9 @@ set-theoretic fibre of `Spec S → Spec R` over `p`. Mathlib's
 * `Ideal.height_eq_height_under_of_quasiFinite`: along a quasi-finite algebra satisfying going
   down, for instance an étale algebra, the height of a prime equals the height of the prime
   below it.
+* `Ideal.height_eq_height_under_of_flat_of_quasiFiniteAt`: the same at a single prime `P`, where
+  `S_P` is flat and quasi-finite over `R`.
+* `Ideal.height_eq_height_under_of_finite_of_flat`: finite flat algebras preserve heights.
 * `TauCeti.ringKrullDim_le_ringKrullDim_add_of_ringKrullDim_fiber_le`: the Krull dimension of `S`
   is at most that of `R` plus a bound on the Krull dimensions of all fibres.
 
@@ -43,6 +46,13 @@ set-theoretic fibre of `Spec S → Spec R` over `p`. Mathlib's
 
 * [Stacks Project, Tag 00OM](https://stacks.math.columbia.edu/tag/00OM)
 * [Stacks Project, Tag 00ON](https://stacks.math.columbia.edu/tag/00ON)
+* `Ideal.height_eq_height_under_of_flat_of_quasiFiniteAt` and
+  `Ideal.height_eq_height_under_of_finite_of_flat` are ported from T. Dupuy, T. Tucker and
+  Z. Wang, [pcfawd-formalization](https://github.com/tdupu/pcfawd-formalization) at commit
+  `9a20b3f351446d64e6015d704198bc71c7002008` (Apache-2.0):
+  `Pcf.Stacks.height_eq_height_under_of_flat_of_quasiFiniteAt` in
+  `lean/Pcf/Stacks/Common/EtaleNormal.lean` and `Pcf.Stacks.Ideal.height_under_eq_of_finite_of_flat`
+  in `lean/Pcf/Stacks/Purity/HeightOneEtaleBridge.lean`.
 -/
 
 public section
@@ -118,6 +128,23 @@ theorem height_eq_height_under_of_quasiFinite [IsNoetherianRing R] [IsNoetherian
   have h0 : (P.map (Quotient.mk ((P.under R).map (algebraMap R S)))).height = 0 :=
     nonpos_iff_eq_zero.mp (by exact_mod_cast h)
   rw [h0, add_zero]
+
+/-- Let `R → S` be a homomorphism of Noetherian rings and `P` a prime of `S` such that `S_P` is
+flat and quasi-finite over `R`. Then the height of `P` is the height of the prime of `R` below
+it. -/
+theorem height_eq_height_under_of_flat_of_quasiFiniteAt [IsNoetherianRing R] [IsNoetherianRing S]
+    (P : Ideal S) [P.IsPrime] [Algebra.QuasiFiniteAt R P]
+    [Module.Flat R (Localization.AtPrime P)] : P.height = (P.under R).height := by
+  let m := IsLocalRing.maximalIdeal (Localization.AtPrime P)
+  have hm : m.under S = P := Localization.AtPrime.under_maximalIdeal
+  rw [← hm, IsLocalization.height_under P.primeCompl m, under_under,
+    height_eq_height_under_of_quasiFinite (R := R) m]
+
+/-- Finite flat homomorphisms of Noetherian rings preserve heights. -/
+theorem height_eq_height_under_of_finite_of_flat [IsNoetherianRing R] [Module.Finite R S]
+    [Module.Flat R S] (P : Ideal S) [P.IsPrime] : P.height = (P.under R).height :=
+  have : IsNoetherianRing S := IsNoetherianRing.of_finite R S
+  height_eq_height_under_of_quasiFinite P
 
 end Ideal
 
