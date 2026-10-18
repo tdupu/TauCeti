@@ -64,6 +64,18 @@ open Set
 
 variable {α β : Type*} {f : α → α} {x : α}
 
+/-- Writing `N = m * (N / m) + N % m`, `f^[N] x` is `f^[m]` iterated `N / m` times on
+`f^[N % m] x`. -/
+theorem iterate_iterate_div_mod (m N : ℕ) : f^[m]^[N / m] (f^[N % m] x) = f^[N] x := by
+  rw [← iterate_mul, ← iterate_add_apply, Nat.div_add_mod]
+
+/-- A periodic point of positive period has a finite forward orbit. -/
+theorem IsPeriodicPt.finite_range_iterate {n : ℕ} (hn : 0 < n) (h : IsPeriodicPt f n x) :
+    (Set.range fun k : ℕ ↦ f^[k] x).Finite := by
+  refine ((Set.finite_Iio n).image fun k ↦ f^[k] x).subset ?_
+  rintro _ ⟨k, rfl⟩
+  exact ⟨k % n, Nat.mod_lt k hn, h.iterate_mod_apply k⟩
+
 /-! ### Preperiodic points -/
 
 /-- `x` is **preperiodic** for `f`: `f^[r + s] x = f^[r] x` for some `r` and some `s ≥ 1`. -/
@@ -130,17 +142,12 @@ theorem isPreperiodicPt_iff_finite_range_iterate :
   constructor
   · intro hx
     obtain ⟨r, s, hs, hper⟩ := hx.exists_isPeriodicPt_iterate
-    refine ((Set.finite_Iio (r + s)).image fun n ↦ f^[n] x).subset ?_
+    refine (((Set.finite_Iio r).image fun n ↦ f^[n] x).union
+      (hper.finite_range_iterate hs)).subset ?_
     rintro _ ⟨n, rfl⟩
     rcases lt_or_ge n r with hn | hn
-    · exact ⟨n, by simp only [Set.mem_Iio]; omega, rfl⟩
-    · refine ⟨(n - r) % s + r, ?_, ?_⟩
-      · have := Nat.mod_lt (n - r) hs
-        simp only [Set.mem_Iio]
-        omega
-      · have hnr : n = (n - r) + r := by omega
-        dsimp only
-        rw [iterate_add_apply, hper.iterate_mod_apply, ← iterate_add_apply, ← hnr]
+    · exact .inl ⟨n, hn, rfl⟩
+    · exact .inr ⟨n - r, by simp only [← iterate_add_apply, Nat.sub_add_cancel hn]⟩
   · intro hfin
     obtain ⟨m, n, hmn, heq⟩ :=
       hfin.exists_lt_map_eq_of_forall_mem (f := fun n : ℕ ↦ f^[n] x) (Set.mem_range_self ·)
@@ -162,8 +169,8 @@ theorem isPreperiodicPt_iterate_iff {m : ℕ} (hm : 0 < m) :
   refine ((Set.finite_lt_nat m).biUnion fun i _ ↦ hx.image f^[i]).subset ?_
   rintro _ ⟨N, rfl⟩
   refine Set.mem_biUnion (Nat.mod_lt N hm) ⟨_, ⟨N / m, rfl⟩, ?_⟩
-  dsimp only
-  rw [← iterate_mul, ← iterate_add_apply, Nat.mod_add_div N m]
+  exact ((Commute.iterate_iterate_self f (N % m) m).iterate_right (N / m) x).trans
+    (iterate_iterate_div_mod m N)
 
 /-- A semiconjugacy carries preperiodic points to preperiodic points. -/
 protected theorem IsPreperiodicPt.map {g : β → β} {π : β → α} (h : Semiconj π g f) {y : β}
@@ -272,8 +279,7 @@ theorem forwardOrbit_iterate {m : ℕ} (hm : 0 < m) :
   · rintro ⟨j, _, ⟨i, -, x, hx, rfl⟩, rfl⟩
     exact ⟨m * j + i, x, hx, by rw [iterate_add_apply, iterate_mul]⟩
   · rintro ⟨N, x, hx, rfl⟩
-    refine ⟨N / m, f^[N % m] x, ⟨N % m, Nat.mod_lt N hm, x, hx, rfl⟩, ?_⟩
-    rw [← iterate_mul, ← iterate_add_apply, Nat.div_add_mod]
+    exact ⟨N / m, f^[N % m] x, ⟨N % m, Nat.mod_lt N hm, x, hx, rfl⟩, iterate_iterate_div_mod m N⟩
 
 /-- A self-map of a finite nonempty invariant set has a periodic point in it. -/
 theorem exists_isPeriodicPt_of_mapsTo (hs : s.Finite) (hne : s.Nonempty) (h : MapsTo f s s) :
