@@ -7,8 +7,8 @@ module
 
 public import Mathlib.Dynamics.PeriodicPts.Defs
 public import Mathlib.Data.Set.Finite.Lattice
-public import Mathlib.Data.Fintype.Pigeonhole
-public import Mathlib.Order.Interval.Finset.Nat
+import Mathlib.Order.Interval.Finset.Nat
+import Mathlib.Order.Preorder.Finite
 import Mathlib.Algebra.Order.Ring.Int
 import Mathlib.Data.ZMod.Defs
 
@@ -77,8 +77,7 @@ theorem isPreperiodicPt_iff : IsPreperiodicPt f x ↔ ∃ r s : ℕ, 0 < s ∧ f
 /-- The equation `f^[r + s] x = f^[r] x` says that `f^[r] x` is periodic of period `s`. -/
 theorem iterate_add_eq_iterate_iff_isPeriodicPt {r s : ℕ} :
     f^[r + s] x = f^[r] x ↔ IsPeriodicPt f s (f^[r] x) := by
-  rw [add_comm, iterate_add_apply]
-  rfl
+  rw [add_comm, iterate_add_apply, IsPeriodicPt, IsFixedPt]
 
 /-- A point some iterate of which is periodic of positive period is preperiodic. -/
 theorem IsPreperiodicPt.of_isPeriodicPt_iterate {r n : ℕ} (hn : 0 < n)
@@ -112,6 +111,18 @@ theorem IsPreperiodicPt.apply_iterate (hx : IsPreperiodicPt f x) (m : ℕ) :
 /-- The image of a preperiodic point is preperiodic. -/
 theorem IsPreperiodicPt.apply (hx : IsPreperiodicPt f x) : IsPreperiodicPt f (f x) :=
   hx.apply_iterate 1
+
+/-- A point is preperiodic iff any of its iterates is. -/
+@[simp]
+theorem isPreperiodicPt_iterate_apply_iff (m : ℕ) :
+    IsPreperiodicPt f (f^[m] x) ↔ IsPreperiodicPt f x := by
+  refine ⟨fun ⟨r, s, hs, hrs⟩ ↦ ⟨r + m, s, hs, ?_⟩, fun hx ↦ hx.apply_iterate m⟩
+  rwa [add_right_comm, iterate_add_apply, iterate_add_apply f r m]
+
+/-- A point is preperiodic iff its image is. -/
+@[simp]
+theorem isPreperiodicPt_apply_iff : IsPreperiodicPt f (f x) ↔ IsPreperiodicPt f x :=
+  isPreperiodicPt_iterate_apply_iff 1
 
 /-- **Preperiodic points have finite forward orbits**, and conversely. -/
 theorem isPreperiodicPt_iff_finite_range_iterate :
@@ -178,6 +189,7 @@ theorem forwardOrbit_subset_of_mapsTo (hst : s ⊆ t) (ht : MapsTo f t t) :
   obtain ⟨n, x, hx, rfl⟩ := mem_forwardOrbit.mp hy
   exact ht.iterate n (hst hx)
 
+@[gcongr]
 theorem forwardOrbit_mono (hst : s ⊆ t) : forwardOrbit f s ⊆ forwardOrbit f t :=
   forwardOrbit_subset_of_mapsTo (hst.trans subset_forwardOrbit) mapsTo_forwardOrbit
 
