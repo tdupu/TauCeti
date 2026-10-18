@@ -6,7 +6,6 @@ Authors: Taylor Dupuy, Thomas Tucker, Zhuoran Wang
 module
 
 public import Mathlib.RingTheory.Spectrum.Prime.LTSeries
-public import Mathlib.RingTheory.Ideal.Height
 
 /-!
 # Height-one primes through an element
