@@ -22,7 +22,7 @@ ring at a closed point has dimension equal to the relative dimension.
 
 By Mathlib's `Algebra.IsStandardSmoothOfRelativeDimension.exists_etale_mvPolynomial`, `S` is étale
 over the polynomial ring `P = k[X₁, …, Xₙ]`. Étale algebras are flat and quasi-finite, so heights
-of primes are preserved along `P → S` (`Ideal.height_eq_height_under_of_quasiFinite`). A maximal
+of primes are preserved along `P → S` (`Ideal.height_eq_height_under_of_etale`). A maximal
 ideal `q` of `S` contracts to a maximal ideal of `P` (`Ideal.isMaximal_under_of_finiteType`),
 and every maximal ideal of `P` has height `n` (`MvPolynomial.height_eq_natCard_of_isMaximal`).
 

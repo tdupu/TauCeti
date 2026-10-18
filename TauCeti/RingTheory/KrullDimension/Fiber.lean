@@ -46,13 +46,14 @@ set-theoretic fibre of `Spec S → Spec R` over `p`. Mathlib's
 
 * [Stacks Project, Tag 00OM](https://stacks.math.columbia.edu/tag/00OM)
 * [Stacks Project, Tag 00ON](https://stacks.math.columbia.edu/tag/00ON)
-* `Ideal.height_eq_height_under_of_flat_of_quasiFiniteAt` and
+* The statements of `Ideal.height_eq_height_under_of_flat_of_quasiFiniteAt` and
   `Ideal.height_eq_height_under_of_finite_of_flat` are ported from T. Dupuy, T. Tucker and
   Z. Wang, [pcfawd-formalization](https://github.com/tdupu/pcfawd-formalization) at commit
   `9a20b3f351446d64e6015d704198bc71c7002008` (Apache-2.0):
   `Pcf.Stacks.height_eq_height_under_of_flat_of_quasiFiniteAt` in
   `lean/Pcf/Stacks/Common/EtaleNormal.lean` and `Pcf.Stacks.Ideal.height_under_eq_of_finite_of_flat`
-  in `lean/Pcf/Stacks/Purity/HeightOneEtaleBridge.lean`.
+  in `lean/Pcf/Stacks/Purity/HeightOneEtaleBridge.lean`. The proofs here derive both from
+  `Ideal.height_eq_height_under_of_quasiFinite`.
 -/
 
 public section
