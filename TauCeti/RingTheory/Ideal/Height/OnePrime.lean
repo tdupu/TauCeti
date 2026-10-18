@@ -6,7 +6,7 @@ Authors: Taylor Dupuy, Thomas Tucker, Zhuoran Wang
 module
 
 public import Mathlib.RingTheory.Spectrum.Prime.LTSeries
-public import TauCeti.RingTheory.Ideal.Height.Basic
+public import Mathlib.RingTheory.Ideal.Height
 
 /-!
 # Height-one primes through an element
@@ -15,17 +15,6 @@ In a Noetherian ring, every element of a prime `P` of positive height lies in a 
 one contained in `P`. For a Noetherian local ring of positive dimension and `P` the maximal
 ideal, this is Stacks, Lemma 58.21.1 (0BJG): every element of the maximal ideal lies in a prime
 `𝔭` with `dim A_𝔭 = 1`.
-
-## Proof
-
-By strong induction on the height of `P`. If it is one, take `P`. Otherwise choose primes
-`𝔭₀ < 𝔭₁ < P` with `Ideal.exists_isPrime_lt_and_height_eq`. Mathlib's
-`PrimeSpectrum.exist_mem_one_of_mem_two` (Krull's principal ideal theorem in a localization) gives
-a prime `Q` with `f ∈ Q` and `𝔭₀ < Q < P`, so `Q` has positive height smaller than that of `P`, and
-the induction hypothesis applies to `Q`.
-
-Stacks argues with a minimal prime `𝔮` of `A` with `dim A ⧸ 𝔮 = dim A` and a maximal element among
-the non-maximal primes containing `𝔮 + (f)`; the induction above uses a chain below `P` instead.
 
 ## Main results
 
@@ -50,20 +39,30 @@ height one contained in `P`. This is the general form of Stacks, Lemma 58.21.1 (
 theorem exists_isPrime_le_and_height_eq_one_of_mem [IsNoetherianRing R] {P : Ideal R}
     [P.IsPrime] (hP : 1 ≤ P.height) {f : R} (hf : f ∈ P) :
     ∃ Q : Ideal R, Q.IsPrime ∧ Q ≤ P ∧ f ∈ Q ∧ Q.height = 1 := by
-  induction hn : P.height using WellFoundedLT.induction generalizing P with
-  | _ n ih =>
-  subst hn
-  rcases le_or_gt P.height 1 with hP1 | hP2
-  · exact ⟨P, inferInstance, le_rfl, hf, le_antisymm hP1 hP⟩
-  obtain ⟨𝔭₁, h𝔭₁, h₁P, h𝔭₁ht⟩ :=
-    exists_isPrime_lt_and_height_eq (n := 1) (by exact_mod_cast hP2)
-  obtain ⟨𝔭₀, h𝔭₀, h₀₁, -⟩ := exists_isPrime_lt_and_height_eq (P := 𝔭₁) (n := 0)
-    (by rw [h𝔭₁ht]; norm_num)
-  obtain ⟨⟨Q, hQ⟩, hfQ, h₀Q, hQP⟩ := PrimeSpectrum.exist_mem_one_of_mem_two
-    (p₀ := ⟨𝔭₀, h𝔭₀⟩) (p₁ := ⟨𝔭₁, h𝔭₁⟩) (p₂ := ⟨P, ‹_›⟩) h₀₁ h₁P hf
-  obtain ⟨Q', hQ', hQ'Q, hfQ', hQ'1⟩ := ih Q.height (height_strict_mono_of_isPrime_of_isPrime hQP)
-    (le_add_self.trans (height_add_one_le_of_lt_of_isPrime (I := 𝔭₀) h₀Q)) hfQ rfl
-  exact ⟨Q', hQ', hQ'Q.trans hQP.le, hfQ', hQ'1⟩
+  obtain ⟨chain, hlast, hlength⟩ := P.exists_ltSeries_length_eq_height
+  have hpositive : 1 ≤ chain.length := by
+    have h : (1 : ℕ∞) ≤ (chain.length : ℕ∞) := by rw [hlength]; exact hP
+    exact_mod_cast h
+  have hf_last : f ∈ chain.last.asIdeal := by simpa [hlast] using hf
+  obtain ⟨adjusted, hf_one, hsame_length, -, hsame_last⟩ :=
+    PrimeSpectrum.exist_ltSeries_mem_one_of_mem_last chain hf_last
+  have hindex : 1 < adjusted.length + 1 := by omega
+  let index : Fin (adjusted.length + 1) := ⟨1, hindex⟩
+  have hmaximal : adjusted.length = Order.height adjusted.last := by
+    rw [← PrimeSpectrum.height_eq_orderHeight, ← hsame_last, hlast]
+    exact (congrArg (fun number : ℕ => (number : ℕ∞)) hsame_length).symm.trans hlength
+  have hheight : (adjusted index).asIdeal.height = 1 := by
+    rw [PrimeSpectrum.height_eq_orderHeight]
+    simpa [index] using Order.height_eq_index_of_length_eq_height_last hmaximal index
+  have hbelow : (adjusted index).asIdeal ≤ P := by
+    have h : (adjusted index).asIdeal ≤ adjusted.last.asIdeal :=
+      (PrimeSpectrum.asIdeal_le_asIdeal (adjusted index) adjusted.last).mpr
+        (adjusted.monotone (Fin.le_last _))
+    rw [← hsame_last, hlast] at h
+    exact h
+  have hmem : f ∈ (adjusted index).asIdeal := by
+    simpa [index, Fin.one_eq_mk_of_lt hindex] using hf_one
+  exact ⟨(adjusted index).asIdeal, inferInstance, hbelow, hmem, hheight⟩
 
 end Ideal
 
