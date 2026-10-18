@@ -42,23 +42,22 @@ theorem IsUnramifiedAt.baseChange (q : Ideal S) [q.IsPrime] (Q : Ideal (R' ⊗[R
   let TQ := Localization.AtPrime Q
   -- `R' ⊗[R] S_q` is formally unramified over `R'` and maps to `T_Q`
   let f₀ : Sq →ₐ[R] TQ := Localization.localAlgHom q Q
-    (Algebra.TensorProduct.includeRight (R := R) (A := R')) (by subst hQ; rfl)
+    (Algebra.TensorProduct.includeRight (R := R) (A := R')) hQ.symm
   let f : R' ⊗[R] Sq →ₐ[R'] TQ :=
     Algebra.TensorProduct.lift (Algebra.ofId _ _) f₀ fun _ _ ↦ .all _ _
   let g : T →ₐ[R'] R' ⊗[R] Sq :=
     Algebra.TensorProduct.map (.id _ _) (IsScalarTower.toAlgHom _ _ _)
+  have hf₀ (s : S) : f₀ (algebraMap S Sq s) = algebraMap T TQ (1 ⊗ₜ s) :=
+    Localization.localRingHom_to_map _ _ _ hQ.symm s
   have hfg (x : T) : f (g x) = algebraMap T TQ x := by
     induction x using TensorProduct.inductionOn with
     | add x y hx hy => simp only [map_add, hx, hy]
     | tmul r s =>
-      have hrs : (r ⊗ₜ[R] s : T) = (r ⊗ₜ[R] 1) * (1 ⊗ₜ[R] s) := by simp
-      rw [Algebra.TensorProduct.map_tmul, Algebra.TensorProduct.lift_tmul]
-      rw [AlgHom.id_apply, IsScalarTower.coe_toAlgHom', Localization.localAlgHom_apply]
-      -- `erw`: the ring hom underlying `includeRight` is `includeRight.toRingHom` only up to defeq
-      erw [Localization.localRingHom_to_map]
-      rw [hrs, map_mul]
-      -- `algebraMap R' TQ r` and `algebraMap T TQ (r ⊗ₜ 1)` agree by definition of the tower
-      rfl
+      rw [Algebra.TensorProduct.map_tmul, Algebra.TensorProduct.lift_tmul, AlgHom.id_apply,
+        IsScalarTower.coe_toAlgHom', hf₀, Algebra.ofId_apply,
+        IsScalarTower.algebraMap_apply R' T TQ, ← map_mul, Algebra.TensorProduct.algebraMap_apply,
+        Algebra.TensorProduct.tmul_mul_tmul, mul_one, one_mul, Algebra.algebraMap_self,
+        RingHom.id_apply]
   algebraize [f.toRingHom, g.toRingHom]
   have : IsScalarTower T (R' ⊗[R] Sq) TQ := .of_algebraMap_eq fun x ↦ (hfg x).symm
   have : FormallyUnramified T TQ := .of_isLocalization Q.primeCompl
