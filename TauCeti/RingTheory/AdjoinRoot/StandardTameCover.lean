@@ -55,7 +55,7 @@ localization at `f` of the cover over `A` is not proved here.
 
 public section
 
-universe u
+universe u v w
 
 open Polynomial
 
@@ -106,19 +106,19 @@ variable (A) in
 /-- `C` is `A`-isomorphic to a finite product of standard tamely ramified covers along `f` with
 exponents invertible in `A`. No tag: it is the shape of the conclusions of Stacks, Lemmas 58.31.5
 (0EYG) and 58.31.6 (0EYH). -/
-def IsFiniteProductOfStandardTameCovers (C : Type u) [CommRing C] [Algebra A C] (f : A) : Prop :=
+def IsFiniteProductOfStandardTameCovers (C : Type v) [CommRing C] [Algebra A C] (f : A) : Prop :=
   ∃ (ι : Type) (_ : Fintype ι) (e : ι → ℕ), (∀ i, 1 ≤ e i) ∧ (∀ i, IsUnit (e i : A)) ∧
     Nonempty (C ≃ₐ[A] ∀ i, standardTameCover A f (e i))
 
 /-- Characterization of finite products of standard tame covers by their indexed family. -/
-theorem isFiniteProductOfStandardTameCovers_iff {C : Type u} [CommRing C] [Algebra A C] (f : A) :
+theorem isFiniteProductOfStandardTameCovers_iff {C : Type v} [CommRing C] [Algebra A C] (f : A) :
     IsFiniteProductOfStandardTameCovers A C f ↔
       ∃ (ι : Type) (_ : Fintype ι) (e : ι → ℕ), (∀ i, 1 ≤ e i) ∧
         (∀ i, IsUnit (e i : A)) ∧ Nonempty (C ≃ₐ[A] ∀ i, standardTameCover A f (e i)) :=
   Iff.rfl
 
 /-- Being a finite product of standard covers is invariant under `A`-algebra isomorphisms. -/
-theorem IsFiniteProductOfStandardTameCovers.of_algEquiv {C C' : Type u} [CommRing C]
+theorem IsFiniteProductOfStandardTameCovers.of_algEquiv {C : Type v} {C' : Type w} [CommRing C]
     [Algebra A C] [CommRing C'] [Algebra A C'] {f : A}
     (h : IsFiniteProductOfStandardTameCovers A C f) (φ : C ≃ₐ[A] C') :
     IsFiniteProductOfStandardTameCovers A C' f := by
