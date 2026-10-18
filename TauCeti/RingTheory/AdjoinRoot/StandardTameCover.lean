@@ -35,9 +35,8 @@ localization at `f` of the cover over `A` is not proved here.
   any localization `B` of `A` away from `f`.
 * `TauCeti.isFiniteProductOfStandardTameCovers_standardTameCover`: a single standard cover is a
   finite product of standard covers.
-* `TauCeti.isFiniteProductOfStandardTameCovers_iff`,
-  `TauCeti.IsFiniteProductOfStandardTameCovers.of_algEquiv`: the defining condition and transport
-  along `A`-algebra isomorphisms.
+* `TauCeti.IsFiniteProductOfStandardTameCovers.of_algEquiv`: transport along `A`-algebra
+  isomorphisms.
 
 ## References
 
@@ -95,7 +94,7 @@ theorem standardTameCover_etale_of_isUnit {f : A} {e : ℕ} (he : e ≠ 0) (hf :
 58.31.4 (0EYF), for the cover built over `A_f`; its comparison with the localization at `f` of the
 cover over `A` is not proved here. -/
 @[stacks 0EYF "étale over D(f), for the cover built over A_f"]
-theorem standardTameCover_etale_away (f : A) {B : Type u} [CommRing B] [Algebra A B]
+theorem standardTameCover_etale_away (f : A) {B : Type*} [CommRing B] [Algebra A B]
     [IsLocalization.Away f B] {e : ℕ} (he : e ≠ 0) (heu : IsUnit (e : A)) :
     Algebra.Etale B (standardTameCover B (algebraMap A B f) e) := by
   have heu' : IsUnit (e : B) := by
@@ -109,13 +108,6 @@ exponents invertible in `A`. No tag: it is the shape of the conclusions of Stack
 def IsFiniteProductOfStandardTameCovers (C : Type u) [CommRing C] [Algebra A C] (f : A) : Prop :=
   ∃ (ι : Type) (_ : Fintype ι) (e : ι → ℕ), (∀ i, 1 ≤ e i) ∧ (∀ i, IsUnit (e i : A)) ∧
     Nonempty (C ≃ₐ[A] ∀ i, standardTameCover A f (e i))
-
-/-- The defining condition of `IsFiniteProductOfStandardTameCovers`. -/
-theorem isFiniteProductOfStandardTameCovers_iff (C : Type u) [CommRing C] [Algebra A C] (f : A) :
-    IsFiniteProductOfStandardTameCovers A C f ↔
-      ∃ (ι : Type) (_ : Fintype ι) (e : ι → ℕ), (∀ i, 1 ≤ e i) ∧ (∀ i, IsUnit (e i : A)) ∧
-        Nonempty (C ≃ₐ[A] ∀ i, standardTameCover A f (e i)) :=
-  Iff.rfl
 
 /-- Being a finite product of standard covers is invariant under `A`-algebra isomorphisms. -/
 theorem IsFiniteProductOfStandardTameCovers.of_algEquiv {C C' : Type u} [CommRing C]
