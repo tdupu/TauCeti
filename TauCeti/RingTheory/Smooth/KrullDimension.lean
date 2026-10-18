@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.RingTheory.Unramified.LocalStructure
-public import TauCeti.RingTheory.KrullDimension.Fiber
+public import TauCeti.RingTheory.Etale.Height
 public import TauCeti.RingTheory.KrullDimension.FiniteType
 public import TauCeti.RingTheory.Ideal.MinimalPrime.Localization
 public import TauCeti.RingTheory.RegularLocalRing.Basic
@@ -68,10 +68,9 @@ theorem height_eq_of_isStandardSmoothOfRelativeDimension (q : Ideal S) [q.IsMaxi
   have : IsScalarTower k P S := .of_algebraMap_eq fun r ↦ (g.commutes r).symm
   have : Algebra.IsStandardSmooth k S :=
     Algebra.IsStandardSmoothOfRelativeDimension.isStandardSmooth n
-  have : IsNoetherianRing S := Algebra.FiniteType.isNoetherianRing k S
   -- Heights are preserved along `P → S`, and `q` contracts to a maximal ideal of `P`.
   have := q.isMaximal_under_of_finiteType k (A := P)
-  rw [Ideal.height_eq_height_under_of_quasiFinite (R := P) q,
+  rw [Ideal.height_eq_height_under_of_etale (R := P) q,
     MvPolynomial.height_eq_natCard_of_isMaximal (q.under P), Nat.card_fin]
 
 /-- A nonzero standard smooth algebra of relative dimension `n` over a field has Krull dimension
