@@ -7,7 +7,7 @@ module
 
 public import TauCeti.RingTheory.Henselization.Jacobson
 public import TauCeti.RingTheory.Henselization.Residue
-public import TauCeti.RingTheory.Etale.StandardEtaleQuotient
+public import TauCeti.RingTheory.Etale.StandardEtale.Quotient
 public import Mathlib.RingTheory.Henselian
 
 /-!
