@@ -9,6 +9,7 @@ public import Mathlib.Algebra.Category.CommAlgCat.Basic
 public import Mathlib.CategoryTheory.ObjectProperty.FullSubcategory
 public import Mathlib.RingTheory.Etale.Basic
 public import Mathlib.RingTheory.Localization.Away.Basic
+public import Mathlib.RingTheory.Unramified.LocalStructure
 
 /-!
 # Pointed étale neighbourhoods
@@ -23,7 +24,10 @@ neighbourhood therefore lands in `ULift Ω`, and `Neighbourhood.point` is the co
 This file records the underlying `R`-algebra map to `Ω` (`Neighbourhood.point`), constructors
 `Neighbourhood.mk'` and `Neighbourhood.homMk'` from algebra maps compatible with the points, an
 extensionality lemma for morphisms, and the refinement `Neighbourhood.away` of a neighbourhood by
-inverting an element that is a unit at the point.
+inverting an element that is a unit at the point. Morphisms of neighbourhoods are described by
+`Neighbourhood.comp_hom_left_hom` and `Neighbourhood.id_hom_left_hom`; a neighbourhood with values
+in a domain becomes standard étale after inverting an element that is nonzero at the point
+(`Neighbourhood.exists_ne_zero_isStandardEtale_away`).
 
 ## References
 
@@ -100,6 +104,18 @@ theorem hom_ext {B C : Neighbourhood R Ω} {f g : B ⟶ C}
   apply ObjectProperty.hom_ext
   apply Over.OverMorphism.ext
   exact CommAlgCat.hom_ext h
+
+/-- The underlying algebra map of a composite of morphisms of pointed neighbourhoods. -/
+@[simp]
+theorem comp_hom_left_hom {B C D : Neighbourhood R Ω} (f : B ⟶ C) (g : C ⟶ D) :
+    (f ≫ g).hom.left.hom = g.hom.left.hom.comp f.hom.left.hom :=
+  (rfl)
+
+/-- The underlying algebra map of the identity of a pointed neighbourhood. -/
+@[simp]
+theorem id_hom_left_hom (B : Neighbourhood R Ω) :
+    (𝟙 B : B ⟶ B).hom.left.hom = AlgHom.id R B.obj.left :=
+  (rfl)
 
 /-- Morphisms of pointed neighbourhoods are compatible with the points. -/
 @[simp]
@@ -223,6 +239,18 @@ theorem exists_refinement_isUnit (B : Neighbourhood R Ω) (b : B.obj.left)
     ∃ (target : Neighbourhood R Ω) (refinement : B ⟶ target),
       IsUnit (refinement.hom.left.hom b) :=
   ⟨away B b hpoint, awayHom B b hpoint, isUnit_awayHom B b hpoint⟩
+
+/-- A pointed étale neighbourhood with values in a domain `Θ` becomes standard étale after inverting
+some element that does not vanish at the point. -/
+theorem exists_ne_zero_isStandardEtale_away {Θ : Type v} [CommRing Θ] [IsDomain Θ] [Algebra R Θ]
+    (B : Neighbourhood R Θ) :
+    ∃ f : B.obj.left, B.point f ≠ 0 ∧ Algebra.IsStandardEtale R (Localization.Away f) := by
+  let Q := RingHom.ker B.point.toRingHom
+  have : Q.IsPrime := RingHom.ker_isPrime _
+  have : Algebra.IsEtaleAt R Q := inferInstance
+  obtain ⟨f, hfQ, hfstd⟩ :=
+    Algebra.IsEtaleAt.exists_isStandardEtale (R := R) (S := B.obj.left) Q
+  exact ⟨f, fun hf => hfQ (RingHom.mem_ker.mpr hf), hfstd⟩
 
 end Neighbourhood
 

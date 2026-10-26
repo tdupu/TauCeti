@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.RingTheory.StrictHenselization.BaseChange
 public import TauCeti.RingTheory.StrictHenselization.Local
 
 /-!
@@ -40,50 +41,37 @@ variable {R S Ω Ψ : Type u} [CommRing R] [CommRing S] [CommRing Ω] [CommRing 
 
 variable [Algebra R (algebra S Ψ)] [IsScalarTower R S (algebra S Ψ)]
 
-private noncomputable abbrev baseChange (φ : Ω →ₐ[R] Ψ) (B : Neighbourhood R Ω) :
-    Neighbourhood S Ψ :=
-  let point : B.obj.left →ₐ[R] Ψ :=
-    φ.comp (ULift.algEquiv.toAlgHom.comp B.obj.hom.hom)
-  let extended : S ⊗[R] B.obj.left →ₐ[S] Ψ := AlgHom.liftEquiv R S _ _ point
-  ⟨Over.mk (CommAlgCat.ofHom (ULift.algEquiv.symm.toAlgHom.comp extended)),
-    (isPointedNeighbourhood_iff S Ψ _).mpr
-      (inferInstanceAs (Algebra.Etale S (S ⊗[R] B.obj.left)))⟩
-
-private noncomputable def baseChangeHom (φ : Ω →ₐ[R] Ψ)
-    {B C : Neighbourhood R Ω} (f : B ⟶ C) :
-    baseChange (S := S) φ B ⟶ baseChange (S := S) φ C :=
-  ObjectProperty.homMk (Over.homMk
-    (CommAlgCat.ofHom (Algebra.TensorProduct.map (AlgHom.id S S) f.hom.left.hom)) (by
-      apply CommAlgCat.hom_ext
-      apply Algebra.TensorProduct.ext_ring
-      ext b
-      have h := congrArg CommAlgCat.Hom.hom f.hom.w
-      simp only [CommAlgCat.hom_comp] at h
-      -- On the right tensor generators, `AlgHom.liftEquiv` evaluates the extended point
-      -- as the original point, so the remaining equation is the point compatibility of `f`.
-      simpa [baseChange, CommAlgCat.hom_comp] using
-        congrArg φ (congrArg ULift.down (DFunLike.congr_fun h b))))
-
 private noncomputable def stageMap (φ : Ω →ₐ[R] Ψ) (B : Neighbourhood R Ω) :
     B.obj.left →ₐ[R] algebra S Ψ :=
   -- The literal tensor carrier lets scalar restriction find its existing `R`-action.
   let leg : S ⊗[R] B.obj.left →ₐ[S] algebra S Ψ :=
-    stage S Ψ (baseChange (S := S) φ B)
+    stage S Ψ ((Neighbourhood.baseChange S φ).obj B)
   (leg.restrictScalars R).comp Algebra.TensorProduct.includeRight
+
+private theorem stageMap_apply (φ : Ω →ₐ[R] Ψ) (B : Neighbourhood R Ω) (b : B.obj.left) :
+    stageMap (S := S) φ B b = stage S Ψ ((Neighbourhood.baseChange S φ).obj B) (1 ⊗ₜ[R] b) :=
+  (rfl)
 
 private theorem stageMap_comp (φ : Ω →ₐ[R] Ψ)
     {B C : Neighbourhood R Ω} (f : B ⟶ C) :
     (stageMap (S := S) φ C).comp f.hom.left.hom = stageMap (S := S) φ B := by
   ext b
-  simpa [stageMap, baseChangeHom, Algebra.TensorProduct.includeRight_apply] using
-    stage_hom_apply S Ψ (baseChangeHom (S := S) φ f) (1 ⊗ₜ[R] b)
+  simpa [stageMap_apply] using
+    stage_hom_apply S Ψ ((Neighbourhood.baseChange S φ).map f) (1 ⊗ₜ[R] b)
+
+omit [Algebra R (algebra S Ψ)] [IsScalarTower R S (algebra S Ψ)] in
+/-- On the base change of a neighbourhood, `toTarget` is its point. -/
+private theorem toTarget_stage_baseChange (φ : Ω →ₐ[R] Ψ) (B : Neighbourhood R Ω)
+    (x : S ⊗[R] B.obj.left) :
+    toTarget S Ψ (stage S Ψ ((Neighbourhood.baseChange S φ).obj B) x) =
+      Neighbourhood.baseChangePoint S φ B x :=
+  (toTarget_stage_apply S Ψ ((Neighbourhood.baseChange S φ).obj B) x).trans
+    (DFunLike.congr_fun (Neighbourhood.point_baseChange_obj S φ B) x)
 
 private theorem toTarget_stageMap (φ : Ω →ₐ[R] Ψ) (B : Neighbourhood R Ω)
     (b : B.obj.left) :
     toTarget S Ψ (stageMap φ B b) = φ (toTarget R Ω (stage R Ω B b)) := by
-  dsimp only [stageMap, AlgHom.comp_apply, AlgHom.restrictScalars_apply]
-  rw [toTarget_stage_apply, Neighbourhood.point_apply]
-  simp [baseChange, Algebra.TensorProduct.includeRight_apply, Neighbourhood.point_apply]
+  simp [stageMap_apply, toTarget_stage_baseChange, toTarget_stage_apply]
 
 private noncomputable def mapAlgHom (φ : Ω →ₐ[R] Ψ) :
     algebra R Ω →ₐ[R] algebra S Ψ :=
